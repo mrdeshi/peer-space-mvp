@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── USERS & AUTH ────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         String   @default("TUTOR") // "MANAGER" | "TUTOR"
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  inviteCode      InviteCode?       @relation("UsedBy")
+  tutorSubjects   TutorSubject[]
+  claimedRequests TutoringRequest[] @relation("ClaimedBy")
+  sentMessages    Message[]
+  lessonsAsTutor  Lesson[]
+  ratingsReceived Rating[]
+}
+
+model InviteCode {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  role        String    @default("TUTOR")
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime
+  usedAt      DateTime?
+  usedById    String?   @unique
+  usedBy      User?     @relation("UsedBy", fields: [usedById], references: [id])
+  createdById String
+}
+
+// ─── SUBJECTS & TUTOR QUALIFICATIONS ─────────────────────
+
+model Subject {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  tutorSubjects TutorSubject[]
+  requests      TutoringRequest[]
+}
+
+model TutorSubject {
+  id        String @id @default(cuid())
+  tutorId   String
+  subjectId String
+  tutor     User    @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([tutorId, subjectId])
+}
+
+// ─── TUTORING REQUESTS ───────────────────────────────────
+
+model TutoringRequest {
+  id            String    @id @default(cuid())
+  requestNumber Int       @unique
+  studentName   String
+  studentEmail  String
+  degreeProgram String
+  academicYear  String
+  subjectId     String
+  subject       Subject   @relation(fields: [subjectId], references: [id])
+  preferredDate DateTime?
+  notes         String?
+  status        String    @default("OPEN") // OPEN | CLAIMED | COMPLETED | CANCELLED
+  chatToken     String?   @unique
+  claimedById   String?
+  claimedBy     User?     @relation("ClaimedBy", fields: [claimedById], references: [id])
+  claimedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  lesson   Lesson?
+  messages Message[]
+  rating   Rating?
+}
+
+// ─── LESSONS ─────────────────────────────────────────────
+
+model Lesson {
+  id               String   @id @default(cuid())
+  requestId        String   @unique
+  request          TutoringRequest @relation(fields: [requestId], references: [id])
+  tutorId          String
+  tutor            User     @relation(fields: [tutorId], references: [id])
+  date             DateTime
+  durationMin      Int
+  location         String   @default("Campus Est SUPSI")
+  reimbursementCHF Float    @default(20.0)
+  completedAt      DateTime @default(now())
+  notes            String?
+
+  @@index([tutorId])
+  @@index([date])
+}
+
+// ─── CHAT MESSAGES ───────────────────────────────────────
+
+model Message {
+  id         String   @id @default(cuid())
+  requestId  String
+  request    TutoringRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  senderId   String?
+  sender     User?    @relation(fields: [senderId], references: [id])
+  senderRole String   // "TUTOR" | "STUDENT" | "SYSTEM"
+  content    String
+  createdAt  DateTime @default(now())
+
+  @@index([requestId, createdAt])
+}
+
+// ─── RATINGS ─────────────────────────────────────────────
+
+model Rating {
+  id           String   @id @default(cuid())
+  requestId    String   @unique
+  request      TutoringRequest @relation(fields: [requestId], references: [id])
+  tutorId      String
+  tutor        User     @relation(fields: [tutorId], references: [id])
+  score        Int?     // 1-5 stars, null = pending
+  comment      String?
+  studentToken String   @unique
+  createdAt    DateTime @default(now())
+
+  @@index([tutorId])
+}
