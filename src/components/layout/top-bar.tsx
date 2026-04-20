@@ -1,0 +1,96 @@
+"use client";
+
+import { signOut } from "next-auth/react";
+import { useTheme } from "next-themes";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+
+interface TopBarProps {
+  userName: string;
+  userRole: string;
+  onMenuToggle?: () => void;
+}
+
+export function TopBar({ userName, userRole, onMenuToggle }: TopBarProps) {
+  const { theme, setTheme } = useTheme();
+
+  return (
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-card px-4 md:px-6">
+      <div className="flex items-center gap-2">
+        {/* Hamburger button - mobile only */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="flex md:hidden rounded-xl text-muted-foreground hover:text-foreground"
+          onClick={onMenuToggle}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </Button>
+      </div>
+      <div className="flex items-center gap-2 md:gap-4">
+        <div className="hidden sm:flex items-center gap-2">
+          <span className="text-sm font-medium">{userName}</span>
+          <Badge variant={userRole === "MANAGER" ? "default" : "secondary"}>
+            {userRole}
+          </Badge>
+        </div>
+        {/* Dark mode toggle */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="rounded-xl text-muted-foreground hover:text-foreground"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+        >
+          {/* Sun icon */}
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="hidden dark:block"
+          >
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="1" x2="12" y2="3" />
+            <line x1="12" y1="21" x2="12" y2="23" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+            <line x1="1" y1="12" x2="3" y2="12" />
+            <line x1="21" y1="12" x2="23" y2="12" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+          </svg>
+          {/* Moon icon */}
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="block dark:hidden"
+          >
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="rounded-xl text-muted-foreground hover:text-foreground"
+          onClick={() => signOut({ callbackUrl: "/login" })}
+        >
+          Esci
+        </Button>
+      </div>
+    </header>
+  );
+}
