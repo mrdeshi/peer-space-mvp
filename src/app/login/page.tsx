@@ -10,10 +10,31 @@ import { Label } from "@/components/ui/label";
 import { PeerSpaceLogo } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 
+const DEMO_ACCOUNTS = [
+  { label: "Manager", email: "manager@supsi.ch", password: "manager123" },
+  { label: "Tutor", email: "tutor@student.supsi.ch", password: "tutor123" },
+] as const;
+
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState<string | null>(null);
+
+  async function handleDemoLogin(email: string, password: string, label: string) {
+    setDemoLoading(label);
+    setError("");
+
+    const res = await signIn("credentials", { email, password, redirect: false });
+
+    if (res?.error) {
+      setError("Account demo non trovato. Esegui il seed del database.");
+      setDemoLoading(null);
+    } else {
+      router.push("/");
+      router.refresh();
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -108,6 +129,27 @@ export default function LoginPage() {
             >
               Registrati
             </Link>
+          </div>
+
+          {/* Demo quick-login */}
+          <div className="mt-6 border-t border-border pt-6">
+            <p className="mb-3 text-center text-xs text-muted-foreground">
+              Accesso rapido demo
+            </p>
+            <div className="flex gap-2">
+              {DEMO_ACCOUNTS.map((account) => (
+                <Button
+                  key={account.label}
+                  type="button"
+                  variant="outline"
+                  className="flex-1 rounded-xl"
+                  disabled={demoLoading !== null || loading}
+                  onClick={() => handleDemoLogin(account.email, account.password, account.label)}
+                >
+                  {demoLoading === account.label ? "Accesso..." : account.label}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
