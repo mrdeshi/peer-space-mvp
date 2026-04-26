@@ -8,7 +8,7 @@ export default auth((req) => {
 
   // Public routes
   const publicPaths = ["/login", "/register", "/chat", "/rate"];
-  const isPublic = publicPaths.some((p) => pathname.startsWith(p));
+  const isPublic = pathname === "/" || publicPaths.some((p) => pathname.startsWith(p));
   const isAuthApi = pathname.startsWith("/api/auth");
   const isPublicApi =
     pathname.startsWith("/api/chat-token") ||
